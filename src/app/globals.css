@@ -1,0 +1,202 @@
+@import "tailwindcss";
+
+/* ============================================================
+   Destiny AI Forge — Design System
+   ============================================================ */
+
+/* ── Custom CSS Variables (Design Tokens) ─────────────────── */
+:root {
+  /* Core palette — inspired by Destiny 2's dark sci-fi aesthetic */
+  --forge-bg-primary: #0a0b0f;
+  --forge-bg-secondary: #12141c;
+  --forge-bg-tertiary: #1a1d2e;
+  --forge-bg-card: rgba(18, 20, 28, 0.85);
+  --forge-bg-glass: rgba(26, 29, 46, 0.6);
+
+  /* Accent colors — Destiny subclass inspired */
+  --forge-solar: #f5a623;
+  --forge-arc: #79bbe8;
+  --forge-void: #b07be5;
+  --forge-stasis: #4d88ff;
+  --forge-strand: #3ddc84;
+  --forge-prismatic: linear-gradient(135deg, #f5a623, #b07be5, #79bbe8, #3ddc84);
+
+  /* Primary accent (golden engram glow) */
+  --forge-accent: #e8b94a;
+  --forge-accent-dim: rgba(232, 185, 74, 0.15);
+  --forge-accent-hover: #f0c85e;
+
+  /* Text */
+  --forge-text-primary: #e8e6e3;
+  --forge-text-secondary: #9a9aa0;
+  --forge-text-muted: #5a5a64;
+
+  /* Borders */
+  --forge-border: rgba(255, 255, 255, 0.06);
+  --forge-border-accent: rgba(232, 185, 74, 0.3);
+
+  /* Shadows */
+  --forge-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --forge-shadow-md: 0 4px 24px rgba(0, 0, 0, 0.4);
+  --forge-shadow-lg: 0 8px 48px rgba(0, 0, 0, 0.5);
+  --forge-shadow-glow: 0 0 40px rgba(232, 185, 74, 0.15);
+
+  /* Timing */
+  --forge-transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --forge-transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --forge-transition-slow: 400ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ── Global Resets ────────────────────────────────────────── */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--forge-bg-tertiary) transparent;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--forge-bg-primary);
+  color: var(--forge-text-primary);
+  overflow-x: hidden;
+}
+
+/* ── Selection Color ──────────────────────────────────────── */
+::selection {
+  background-color: rgba(232, 185, 74, 0.3);
+  color: #fff;
+}
+
+/* ── Glassmorphism Utility ────────────────────────────────── */
+.glass {
+  background: var(--forge-bg-glass);
+  backdrop-filter: blur(20px) saturate(1.2);
+  -webkit-backdrop-filter: blur(20px) saturate(1.2);
+  border: 1px solid var(--forge-border);
+}
+
+.glass-card {
+  background: var(--forge-bg-card);
+  backdrop-filter: blur(16px) saturate(1.1);
+  -webkit-backdrop-filter: blur(16px) saturate(1.1);
+  border: 1px solid var(--forge-border);
+  border-radius: 16px;
+  box-shadow: var(--forge-shadow-md);
+}
+
+/* ── Glow Effects ─────────────────────────────────────────── */
+.glow-accent {
+  box-shadow: var(--forge-shadow-glow);
+}
+
+.glow-text {
+  text-shadow: 0 0 20px rgba(232, 185, 74, 0.4),
+               0 0 40px rgba(232, 185, 74, 0.2);
+}
+
+/* ── Animations ───────────────────────────────────────────── */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(232, 185, 74, 0.15);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(232, 185, 74, 0.3),
+                0 0 60px rgba(232, 185, 74, 0.1);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes rotate-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.6s ease-out both;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s ease-out both;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 3s ease-in-out infinite;
+}
+
+.animate-shimmer {
+  background-size: 200% auto;
+  animation: shimmer 3s linear infinite;
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+/* ── Staggered Animation Delays ───────────────────────────── */
+.delay-100 { animation-delay: 100ms; }
+.delay-200 { animation-delay: 200ms; }
+.delay-300 { animation-delay: 300ms; }
+.delay-400 { animation-delay: 400ms; }
+.delay-500 { animation-delay: 500ms; }
+
+/* ── Gradient Text ────────────────────────────────────────── */
+.text-gradient-gold {
+  background: linear-gradient(135deg, #e8b94a 0%, #f0d78c 50%, #c4953a 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.text-gradient-prismatic {
+  background: linear-gradient(135deg, #f5a623, #b07be5, #79bbe8, #3ddc84);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ── Background Patterns ──────────────────────────────────── */
+.bg-grid-pattern {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 60px 60px;
+}
+
+.bg-radial-fade {
+  background: radial-gradient(
+    ellipse at 50% 0%,
+    rgba(232, 185, 74, 0.08) 0%,
+    transparent 60%
+  );
+}
