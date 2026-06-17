@@ -14,7 +14,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { prompt, guardianClass, activityContext } = body;
+    const { prompt, guardianClass, activityContext, playerExotics } = body;
 
     if (!prompt || typeof prompt !== 'string' || prompt.trim().length === 0) {
       return NextResponse.json(
@@ -37,7 +37,7 @@ export async function POST(request: Request) {
     }
     userPrompt += `\nNecesidad del jugador:\n${prompt}`;
 
-    const systemInstruction = getBuildAgentSystemPrompt(guardianClass);
+    const systemInstruction = getBuildAgentSystemPrompt(guardianClass, playerExotics || []);
 
     // ── 2. Inicializar SDK de Google Premium ─────────────
     const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENAI_API_KEY;

@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, Orbitron } from "next/font/google";
 import "./globals.css";
 
@@ -19,22 +19,23 @@ export const metadata: Metadata = {
   title: "Destiny AI Forge — AI Buildcrafter for Destiny 2",
   description:
     "The ultimate AI-powered Destiny 2 build optimizer. Natural language buildcrafting powered by Google Gemini with Web Worker armor permutation.",
-  keywords: [
-    "Destiny 2",
-    "build",
-    "armor",
-    "optimizer",
-    "AI",
-    "buildcrafter",
-    "exotic",
-    "subclass",
-  ],
-  authors: [{ name: "Destiny AI Forge" }],
-  openGraph: {
-    title: "Destiny AI Forge — AI Buildcrafter",
-    description: "AI-powered Destiny 2 build optimization",
-    type: "website",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "AI Forge",
   },
+  formatDetection: {
+    telephone: false,
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#e8b94a",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export default function RootLayout({
@@ -43,12 +44,28 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} ${orbitron.variable}`}>
+    <html lang="en" className={`${inter.variable} ${orbitron.variable}`} suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              try {
+                let theme = localStorage.getItem('forge-theme');
+                if (!theme) {
+                  theme = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+                }
+                document.documentElement.setAttribute('data-theme', theme);
+              } catch (e) {}
+            `,
+          }}
+        />
+      </head>
       <body className="font-[family-name:var(--font-inter)] antialiased min-h-screen">
         {/* Background layers */}
         <div className="fixed inset-0 -z-10 bg-[var(--forge-bg-primary)]" />
         <div className="fixed inset-0 -z-10 bg-grid-pattern opacity-50" />
         <div className="fixed inset-0 -z-10 bg-radial-fade" />
+        <div className="fixed inset-0 -z-10 bg-noise pointer-events-none" />
 
         {children}
       </body>

@@ -1,14 +1,13 @@
 // ============================================================
 // Destiny AI Forge — Zustand Build Store (v2 — Build Agent)
 // ============================================================
-// Estado global del flujo de buildcrafting.
-// Ahora usa el nuevo endpoint /api/build-agent (Gemma 4) y
-// el contrato BuildAgentStrategy con negativeStatFragments.
+// Estado global del flujo de buildcrafting e inventario completo.
 // ============================================================
 
 import { create } from 'zustand';
 import type { BuildAgentStrategy, BuildAgentRequest } from '@/lib/ai/build-agent-types';
 import type { ArmorItem } from '@/lib/armor/types';
+import type { WeaponItem } from '@/lib/bungie/types-weapons';
 import type { DestinyCharacter } from '@/lib/bungie/inventory';
 
 type BuildPhase = 'idle' | 'prompting' | 'ai-thinking' | 'optimizing' | 'results';
@@ -28,6 +27,9 @@ interface BuildState {
 
   /** Armaduras del inventario del jugador */
   armorInventory: ArmorItem[];
+  
+  /** Armas del inventario del jugador */
+  weaponInventory: WeaponItem[];
 
   /** Personajes de la cuenta del jugador */
   characters: DestinyCharacter[];
@@ -43,17 +45,20 @@ interface BuildState {
 
   // ── Acciones ─────────────────────────────────────────────
 
-  /** Enviar prompt al Build Agent (Gemma 4) */
+  /** Enviar prompt al Build Agent */
   requestBuildStrategy: (request: BuildAgentRequest) => Promise<void>;
 
-  /** Establecer el inventario de armaduras */
-  setArmorInventory: (items: ArmorItem[]) => void;
+  /** Establecer el inventario completo */
+  setInventory: (armors: ArmorItem[], weapons: WeaponItem[]) => void;
 
   /** Establecer los personajes de la cuenta */
   setCharacters: (chars: DestinyCharacter[]) => void;
 
   /** Marcar el Manifest como listo */
   setManifestReady: (ready: boolean) => void;
+  
+  /** Set de estado de carga de inventario */
+  setIsLoadingInventory: (loading: boolean) => void;
 
   /** Cambiar fase */
   setPhase: (phase: BuildPhase) => void;
@@ -71,6 +76,7 @@ export const useBuildStore = create<BuildState>((set) => ({
   strategy: null,
   aiModel: null,
   armorInventory: [],
+  weaponInventory: [],
   characters: [],
   isManifestReady: false,
   error: null,
@@ -86,11 +92,25 @@ export const useBuildStore = create<BuildState>((set) => ({
         aiModel: null,
       });
 
-      // Llamar al endpoint Build Agent (ahora con Gemini 1.5 Flash)
+      // Extraer los exóticos de la clase solicitada que el jugador ya posee
+      const { armorInventory } = useBuildStore.getState();
+      const playerExotics = Array.from(new Set(
+         armorInventory
+           .filter(a => a.isExotic)
+           // Aquí podríamos filtrar por clase si tuviéramos un mapping estricto, 
+           // pero como el prompt ya restringe por clase, podemos pasar todos los nombres
+           // o solo los que coinciden vagamente. Pasaremos todos para que la IA decida.
+           .map(a => a.name)
+      ));
+
+      // Llamar al endpoint Build Agent
       const response = await fetch('/api/build-agent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(request),
+        body: JSON.stringify({
+          ...request,
+          playerExotics
+        }),
       });
 
       const data = await response.json();
@@ -119,11 +139,13 @@ export const useBuildStore = create<BuildState>((set) => ({
     }
   },
 
-  setArmorInventory: (items: ArmorItem[]) => set({ armorInventory: items }),
+  setInventory: (armors: ArmorItem[], weapons: WeaponItem[]) => set({ armorInventory: armors, weaponInventory: weapons }),
 
   setCharacters: (chars: DestinyCharacter[]) => set({ characters: chars }),
 
   setManifestReady: (ready: boolean) => set({ isManifestReady: ready }),
+  
+  setIsLoadingInventory: (loading: boolean) => set({ isLoadingInventory: loading }),
 
   setPhase: (phase: BuildPhase) => set({ phase }),
 

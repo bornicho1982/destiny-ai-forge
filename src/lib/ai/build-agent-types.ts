@@ -81,6 +81,8 @@ export interface BuildAgentRequest {
   guardianClass: GuardianClass;
   /** Contexto de actividad opcional */
   activityContext?: 'raid' | 'dungeon' | 'grandmaster' | 'pvp' | 'general';
+  /** Nombres de los exóticos que el jugador posee en el inventario o bóveda */
+  playerExotics?: string[];
 }
 
 /**

@@ -1,26 +1,26 @@
 'use client';
 
 // ============================================================
-// Destiny AI Forge — Dashboard Principal
+// Destiny AI Forge — Dashboard Principal Premium
 // ============================================================
-// Integra todos los componentes: descarga del Manifest, prompt IA,
-// tarjeta de estrategia, y resultados del optimizador de armadura.
+// Layout con Sidebar lateral, header premium y panel central.
+// Integra todos los componentes del optimizador y bóveda.
 // ============================================================
 
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useState } from 'react';
 import { useAuthStore } from '@/stores/auth-store';
 import { useBuildStore } from '@/stores/build-store';
 import { useArmorOptimizer } from '@/hooks/use-armor-optimizer';
+import { useLocale } from '@/hooks/use-locale';
 import { BuildPrompt } from '@/components/ai/build-prompt';
 import { BuildStrategyCard } from '@/components/ai/build-strategy-card';
 import { OptimizerResults } from '@/components/armor/optimizer-results';
 import { InventoryManager } from '@/components/inventory/inventory-manager';
 import { LoadoutManager } from '@/components/loadouts/loadout-manager';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { extractArmorFromProfile, extractCharactersFromProfile, groupArmorBySlot } from '@/lib/bungie/inventory';
+import { extractInventoryFromProfile, extractCharactersFromProfile, groupArmorBySlot } from '@/lib/bungie/inventory';
 import { ensureManifestCached, type ManifestDownloadProgress } from '@/lib/bungie/manifest';
 import type { OptimizerConfig } from '@/lib/armor/types';
-import { useState } from 'react';
 
 /** Mapeo de clase → classType de Bungie */
 const CLASS_TYPE_MAP: Record<string, number> = {
@@ -31,13 +31,14 @@ const CLASS_TYPE_MAP: Record<string, number> = {
 
 export default function DashboardPage() {
   const { session, isLoading: authLoading, checkAuth, logout } = useAuthStore();
+  const { t } = useLocale();
   const {
     phase,
     strategy,
     armorInventory,
     isManifestReady,
     error: buildError,
-    setArmorInventory,
+    setInventory,
     setCharacters,
     setManifestReady,
     setPhase,
@@ -47,11 +48,12 @@ export default function DashboardPage() {
 
   const optimizer = useArmorOptimizer();
 
-  // Estado local para el Manifest
+  // Estado local
   const [manifestProgress, setManifestProgress] = useState<ManifestDownloadProgress | null>(null);
   const [manifestError, setManifestError] = useState<string | null>(null);
   const [isLoadingProfile, setIsLoadingProfile] = useState(false);
   const [activeTab, setActiveTab] = useState<'forge' | 'armory' | 'loadouts'>('forge');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // ── Inicialización ─────────────────────────────────────────
 
@@ -59,50 +61,34 @@ export default function DashboardPage() {
     checkAuth();
   }, [checkAuth]);
 
-  // Descargar Manifest al montar (si no está cacheado)
+  // Descargar Manifest al montar
   useEffect(() => {
     if (authLoading || !session?.isAuthenticated) return;
-
     const initManifest = async () => {
       try {
-        const { updated } = await ensureManifestCached('en', (progress) => {
-          setManifestProgress(progress);
-        });
-
+        const { updated } = await ensureManifestCached('en', setManifestProgress);
         setManifestReady(true);
-        if (updated) {
-          console.log('[Dashboard] Manifest descargado y cacheado');
-        }
+        if (updated) console.log('[Dashboard] Manifest descargado y cacheado');
         setManifestProgress(null);
       } catch (err) {
-        setManifestError(
-          err instanceof Error ? err.message : 'Error al descargar el Manifest'
-        );
+        setManifestError(err instanceof Error ? err.message : 'Error al descargar el Manifest');
       }
     };
-
     initManifest();
   }, [authLoading, session?.isAuthenticated, setManifestReady]);
 
-  // Cargar inventario cuando el Manifest esté listo
+  // Cargar inventario
   useEffect(() => {
     if (!isManifestReady || !session?.isAuthenticated || armorInventory.length > 0) return;
-
     const loadInventory = async () => {
       try {
         setIsLoadingProfile(true);
         const response = await fetch('/api/destiny/profile');
         const data = await response.json();
-
-        if (!response.ok || !data.success) {
-          console.error('[Dashboard] Error al cargar perfil:', data.error);
-          return;
-        }
-
-        const armor = await extractArmorFromProfile(data.profile);
+        if (!response.ok || !data.success) throw new Error(data.error);
+        const inventoryData = await extractInventoryFromProfile(data.profile);
         const chars = extractCharactersFromProfile(data.profile);
-        
-        setArmorInventory(armor);
+        setInventory(inventoryData.armors, inventoryData.weapons);
         setCharacters(chars);
       } catch (err) {
         console.error('[Dashboard] Error al procesar inventario:', err);
@@ -110,15 +96,13 @@ export default function DashboardPage() {
         setIsLoadingProfile(false);
       }
     };
-
     loadInventory();
-  }, [isManifestReady, session?.isAuthenticated, armorInventory.length, setArmorInventory, setCharacters]);
+  }, [isManifestReady, session?.isAuthenticated, armorInventory.length, setInventory, setCharacters]);
 
-  // ── Lanzar optimización cuando la IA da resultado ──────────
+  // ── Optimizador ──────────────────────────────────────────
 
   const handleOptimize = useCallback(() => {
     if (!strategy || armorInventory.length === 0 || !lastRequest) return;
-
     const classType = CLASS_TYPE_MAP[lastRequest.guardianClass] ?? 1;
     const armorBySlot = groupArmorBySlot(armorInventory, classType);
 
@@ -132,7 +116,6 @@ export default function DashboardPage() {
     const config: OptimizerConfig = {
       armorBySlot,
       requiredExoticHash: strategy.requiredExoticHash,
-      // Los primeros 2 stats son tier1, el resto tier2
       tier1Stats: strategy.statPriorities.slice(0, 2),
       tier2Stats: strategy.statPriorities.slice(2),
       assumeMasterwork: true,
@@ -143,19 +126,16 @@ export default function DashboardPage() {
     optimizer.optimize(config);
   }, [strategy, armorInventory, lastRequest, optimizer, setPhase]);
 
-  // Actualizar fase cuando el optimizador termina
   useEffect(() => {
-    if (optimizer.result && phase === 'optimizing') {
-      setPhase('results');
-    }
+    if (optimizer.result && phase === 'optimizing') setPhase('results');
   }, [optimizer.result, phase, setPhase]);
 
   // ── Loading State ──────────────────────────────────────────
 
   if (authLoading) {
     return (
-      <main className="min-h-screen flex items-center justify-center">
-        <LoadingSpinner text="Cargando datos del guardián..." />
+      <main className="min-h-screen bg-[var(--forge-bg-primary)] flex items-center justify-center">
+        <LoadingSpinner text={t('dashboard.authenticating')} />
       </main>
     );
   }
@@ -163,255 +143,173 @@ export default function DashboardPage() {
   // ── Render Principal ───────────────────────────────────────
 
   return (
-    <main className="min-h-screen">
-      {/* ── Barra Superior ──────────────────────────────────── */}
-      <header className="sticky top-0 z-50 glass border-b border-[var(--forge-border)] px-6 py-4">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
+    <div className="flex h-screen overflow-hidden bg-[var(--forge-bg-primary)] text-[var(--forge-text-primary)]">
+      
+      {/* ── Sidebar (Mobile overlay & Desktop sticky) ── */}
+      <aside className={`fixed inset-y-0 left-0 z-50 w-64 glass border-r border-[var(--forge-border)] transform transition-transform duration-300 ease-in-out md:translate-x-0 md:static md:w-64 flex flex-col ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        <div className="p-6 border-b border-[var(--forge-border)] flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg rotate-45 bg-gradient-to-br from-[var(--forge-accent)] to-[#c4953a] flex items-center justify-center">
-              <svg className="w-4 h-4 -rotate-45 text-[var(--forge-bg-primary)]" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 2L2 7v10l10 5 10-5V7L12 2zm0 2.18l7.66 3.83L12 11.83 4.34 8.01 12 4.18z" />
-              </svg>
+            <div className="w-8 h-8 rounded-lg rotate-45 bg-gradient-to-br from-[#ceae33] to-[#e8b94a] flex items-center justify-center shadow-[0_0_10px_rgba(206,174,51,0.3)]">
+              <svg className="w-4 h-4 -rotate-45 text-black" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 7v10l10 5 10-5V7L12 2zm0 2.18l7.66 3.83L12 11.83 4.34 8.01 12 4.18z" /></svg>
             </div>
-            <span className="font-[family-name:var(--font-orbitron)] text-sm font-semibold tracking-wider text-[var(--forge-text-primary)]">
-              AI FORGE
-            </span>
+            <span className="font-[family-name:var(--font-orbitron)] font-bold tracking-widest text-white">FORGE</span>
           </div>
-
-          <div className="flex items-center gap-4">
-            {/* Indicadores de estado */}
-            <div className="hidden md:flex items-center gap-3">
-              <StatusDot
-                label="Manifest"
-                status={isManifestReady ? 'online' : manifestProgress ? 'loading' : 'offline'}
-              />
-              <StatusDot
-                label="Inventario"
-                status={
-                  armorInventory.length > 0
-                    ? 'online'
-                    : isLoadingProfile
-                    ? 'loading'
-                    : 'offline'
-                }
-                detail={armorInventory.length > 0 ? `${armorInventory.length} piezas` : undefined}
-              />
-              <StatusDot label="IA" status="online" />
-            </div>
-
-            {session?.displayName && (
-              <span className="text-sm text-[var(--forge-text-secondary)]">
-                <span className="text-[var(--forge-accent)] font-medium">
-                  {session.displayName}
-                </span>
-              </span>
-            )}
-            <button
-              id="logout-button"
-              onClick={logout}
-              className="px-4 py-2 rounded-lg text-sm border border-[var(--forge-border)] text-[var(--forge-text-secondary)] hover:text-[var(--forge-text-primary)] hover:border-[rgba(255,255,255,0.15)] transition-all duration-200 cursor-pointer"
-            >
-              Salir
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {/* ── Contenido Principal ─────────────────────────────── */}
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        {/* Barra de progreso del Manifest */}
-        {manifestProgress && manifestProgress.percent < 100 && (
-          <div className="mb-6 glass-card p-4 animate-fade-in">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs text-[var(--forge-text-secondary)]">
-                📥 Descargando Manifest: {manifestProgress.currentTable}
-              </span>
-              <span className="text-xs font-bold text-[var(--forge-accent)] tabular-nums">
-                {manifestProgress.percent}%
-              </span>
-            </div>
-            <div className="h-1.5 rounded-full bg-[var(--forge-bg-tertiary)] overflow-hidden">
-              <div
-                className="h-full rounded-full bg-gradient-to-r from-[var(--forge-accent)] to-[#c4953a] transition-all duration-300"
-                style={{ width: `${manifestProgress.percent}%` }}
-              />
-            </div>
-          </div>
-        )}
-
-        {/* Error del Manifest */}
-        {manifestError && (
-          <div className="mb-6 glass-card p-4 border-red-500/30 animate-fade-in">
-            <p className="text-sm text-red-400">❌ {manifestError}</p>
-          </div>
-        )}
-
-        {/* Error del build */}
-        {buildError && (
-          <div className="mb-6 glass-card p-4 border-red-500/30 animate-fade-in">
-            <div className="flex items-center justify-between">
-              <p className="text-sm text-red-400">❌ {buildError}</p>
-              <button
-                onClick={clearError}
-                className="text-xs text-[var(--forge-text-muted)] hover:text-[var(--forge-text-secondary)] cursor-pointer"
-              >
-                Cerrar
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Pestañas de Navegación */}
-        <div className="flex gap-4 mb-6 border-b border-[var(--forge-border)] pb-px">
-          <button
-            onClick={() => setActiveTab('forge')}
-            className={`px-4 py-2 font-[family-name:var(--font-orbitron)] font-bold text-sm tracking-widest uppercase transition-all border-b-2 ${
-              activeTab === 'forge'
-                ? 'border-[var(--forge-accent)] text-[var(--forge-accent)] drop-shadow-[0_0_8px_rgba(234,179,8,0.5)]'
-                : 'border-transparent text-[var(--forge-text-muted)] hover:text-[var(--forge-text-primary)]'
-            }`}
-          >
-            Forge AI
-          </button>
-          <button
-            onClick={() => setActiveTab('armory')}
-            className={`px-4 py-2 font-[family-name:var(--font-orbitron)] font-bold text-sm tracking-widest uppercase transition-all border-b-2 ${
-              activeTab === 'armory'
-                ? 'border-[var(--forge-accent)] text-[var(--forge-accent)] drop-shadow-[0_0_8px_rgba(234,179,8,0.5)]'
-                : 'border-transparent text-[var(--forge-text-muted)] hover:text-[var(--forge-text-primary)]'
-            }`}
-          >
-            Armería
-          </button>
-          <button
-            onClick={() => setActiveTab('loadouts')}
-            className={`px-4 py-2 font-[family-name:var(--font-orbitron)] font-bold text-sm tracking-widest uppercase transition-all border-b-2 ${
-              activeTab === 'loadouts'
-                ? 'border-[var(--forge-accent)] text-[var(--forge-accent)] drop-shadow-[0_0_8px_rgba(234,179,8,0.5)]'
-                : 'border-transparent text-[var(--forge-text-muted)] hover:text-[var(--forge-text-primary)]'
-            }`}
-          >
-            Mis Builds
-          </button>
+          <button className="md:hidden text-white" onClick={() => setSidebarOpen(false)}>✕</button>
         </div>
 
-        {activeTab === 'armory' && <InventoryManager />}
+        <nav className="flex-1 p-4 flex flex-col gap-2">
+           <SidebarLink active={activeTab === 'forge'} onClick={() => { setActiveTab('forge'); setSidebarOpen(false); }} icon="🧠" label={t('nav.forgeAi')} />
+           <SidebarLink active={activeTab === 'armory'} onClick={() => { setActiveTab('armory'); setSidebarOpen(false); }} icon="🛡️" label={t('nav.armory')} />
+           <SidebarLink active={activeTab === 'loadouts'} onClick={() => { setActiveTab('loadouts'); setSidebarOpen(false); }} icon="💾" label={t('nav.loadouts')} />
+        </nav>
+
+        <div className="p-6 border-t border-[var(--forge-border)]">
+          {session?.displayName && (
+            <div className="flex items-center gap-3 mb-4">
+               <div className="w-8 h-8 rounded-full bg-gradient-to-r from-[var(--forge-void)] to-[var(--forge-arc)] p-0.5">
+                  <div className="w-full h-full rounded-full bg-black flex items-center justify-center text-xs font-bold">{session.displayName.substring(0, 2).toUpperCase()}</div>
+               </div>
+               <span className="text-sm font-bold text-white truncate">{session.displayName}</span>
+            </div>
+          )}
+          <button onClick={logout} className="w-full py-2 rounded-lg bg-[var(--forge-bg-secondary)] border border-[var(--forge-border)] text-xs font-bold uppercase tracking-widest hover:bg-white/5 transition-colors">{t('nav.logout')}</button>
+        </div>
+      </aside>
+
+      {/* ── Overlay Mobile ── */}
+      {sidebarOpen && (
+        <div className="fixed inset-0 bg-black/60 z-40 md:hidden backdrop-blur-sm" onClick={() => setSidebarOpen(false)} />
+      )}
+
+      {/* ── Main Content Area ── */}
+      <div className="flex-1 flex flex-col h-screen overflow-hidden relative">
         
-        {activeTab === 'loadouts' && <LoadoutManager />}
+        {/* Decorative Grid BG */}
+        <div className="absolute inset-0 bg-[url('/noise.png')] opacity-5 mix-blend-overlay pointer-events-none z-0"></div>
 
-        {activeTab === 'forge' && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            {/* Columna izquierda: Prompt IA */}
-          <div className="lg:col-span-5">
-            <BuildPrompt />
-          </div>
+        {/* Header Mobile / Status Bar */}
+        <header className="h-16 border-b border-[var(--forge-border)] glass flex items-center justify-between px-4 lg:px-8 z-10 sticky top-0">
+           <button className="md:hidden text-white p-2" onClick={() => setSidebarOpen(true)}>☰</button>
+           <h2 className="font-[family-name:var(--font-orbitron)] font-bold text-lg tracking-widest uppercase text-white/90 drop-shadow-md hidden md:block">
+              {activeTab === 'forge' ? t('dashboard.title.forge') : activeTab === 'armory' ? t('dashboard.title.armory') : t('dashboard.title.loadouts')}
+           </h2>
+           <div className="flex items-center gap-4">
+              <StatusBadge label="DB" status={isManifestReady ? 'online' : manifestProgress ? 'loading' : 'offline'} />
+              <StatusBadge label="INV" status={armorInventory.length > 0 ? 'online' : isLoadingProfile ? 'loading' : 'offline'} />
+           </div>
+        </header>
 
-          {/* Columna derecha: Resultados */}
-          <div className="lg:col-span-7 space-y-6">
-            {/* Estado: IA pensando */}
-            {phase === 'ai-thinking' && (
-              <div className="glass-card p-12 flex items-center justify-center animate-fade-in">
-                <LoadingSpinner text="FORGE-AI está analizando..." size={56} />
+        {/* Scrollable Content */}
+        <main className="flex-1 overflow-y-auto p-4 lg:p-8 z-10 relative">
+          <div className="max-w-7xl mx-auto space-y-6">
+            
+            {/* Alertas Globales */}
+            {(manifestError || buildError || optimizer.error) && (
+              <div className="glass-card p-4 border-red-500/30 flex items-center justify-between bg-red-500/5">
+                <p className="text-sm text-red-400 font-medium">⚠️ {manifestError || buildError || optimizer.error}</p>
+                {buildError && <button onClick={clearError} className="text-xs text-red-400 hover:text-white">{t('common.close')}</button>}
               </div>
             )}
 
-            {/* Tarjeta de Estrategia de la IA */}
-            {strategy && (phase === 'optimizing' || phase === 'results' || phase === 'idle') && (
-              <BuildStrategyCard
-                strategy={strategy}
-                onOptimize={armorInventory.length > 0 ? handleOptimize : undefined}
-                isOptimizing={optimizer.isRunning}
-              />
-            )}
-
-            {/* Progreso del Optimizador */}
-            {optimizer.isRunning && (
-              <div className="glass-card p-4 animate-fade-in">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs text-[var(--forge-text-secondary)]">
-                    ⚡ Evaluando permutaciones de armadura...
-                  </span>
-                  <span className="text-xs font-bold text-[var(--forge-accent)] tabular-nums">
-                    {optimizer.progress}%
-                  </span>
+            {manifestProgress && manifestProgress.percent < 100 && (
+              <div className="glass-card p-4 border-[#ceae33]/30 bg-[#ceae33]/5">
+                <div className="flex justify-between text-xs mb-2 text-[#ceae33] font-bold tracking-widest uppercase">
+                  <span>{t('dashboard.manifest.updating')}{manifestProgress.currentTable}</span>
+                  <span>{manifestProgress.percent}%</span>
                 </div>
-                <div className="h-1.5 rounded-full bg-[var(--forge-bg-tertiary)] overflow-hidden">
-                  <div
-                    className="h-full rounded-full bg-gradient-to-r from-[var(--forge-void)] to-[var(--forge-arc)] transition-all duration-200"
-                    style={{ width: `${optimizer.progress}%` }}
-                  />
+                <div className="h-1 bg-black/50 rounded-full overflow-hidden">
+                  <div className="h-full bg-[#ceae33] transition-all" style={{ width: `${manifestProgress.percent}%` }} />
                 </div>
-                <p className="text-[10px] text-[var(--forge-text-muted)] mt-1">
-                  {optimizer.evaluated.toLocaleString('es-ES')} permutaciones evaluadas
-                </p>
               </div>
             )}
 
-            {/* Resultados del Optimizador */}
-            {optimizer.result && phase === 'results' && strategy && (
-              <OptimizerResults
-                result={optimizer.result}
-                tier1Stats={strategy.statPriorities.slice(0, 2)}
-                tier2Stats={strategy.statPriorities.slice(2)}
-              />
-            )}
+            {/* Render de Pestañas */}
+            {activeTab === 'armory' && <InventoryManager />}
+            {activeTab === 'loadouts' && <LoadoutManager />}
+            
+            {activeTab === 'forge' && (
+              <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
+                {/* Panel IA */}
+                <div className="xl:col-span-5 space-y-6">
+                   <BuildPrompt />
+                </div>
 
-            {/* Estado vacío */}
-            {phase === 'idle' && !strategy && (
-              <div className="glass-card p-12 text-center animate-fade-in">
-                <p className="text-4xl mb-4">🔮</p>
-                <h3 className="font-[family-name:var(--font-orbitron)] text-sm font-semibold uppercase tracking-wider mb-2 text-[var(--forge-text-primary)]">
-                  Listo para Forjar
-                </h3>
-                <p className="text-sm text-[var(--forge-text-muted)] max-w-sm mx-auto">
-                  Describe el build que necesitas en el panel izquierdo.
-                  FORGE-AI analizará tu solicitud y recomendará la estrategia óptima.
-                </p>
+                {/* Resultados y Estrategia */}
+                <div className="xl:col-span-7 space-y-6">
+                  {phase === 'ai-thinking' && (
+                    <div className="glass-card p-16 flex items-center justify-center border-[var(--forge-border-accent)] bg-[var(--forge-accent-dim)]">
+                      <LoadingSpinner text={t('build.thinking')} size={64} />
+                    </div>
+                  )}
+
+                  {strategy && (phase === 'optimizing' || phase === 'results' || phase === 'idle') && (
+                    <BuildStrategyCard strategy={strategy} onOptimize={armorInventory.length > 0 ? handleOptimize : undefined} isOptimizing={optimizer.isRunning} />
+                  )}
+
+                  {optimizer.isRunning && (
+                    <div className="glass-card p-6 border-[var(--forge-arc)]/30 bg-[var(--forge-arc)]/5">
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-xs font-bold text-[var(--forge-arc)] tracking-widest uppercase animate-pulse">{t('dashboard.optimizing')}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-black text-white">{optimizer.progress}%</span>
+                          <LoadingSpinner size={16} />
+                        </div>
+                      </div>
+                      <div className="h-2 rounded-full bg-black/50 overflow-hidden shadow-inner">
+                        <div className="h-full bg-[var(--forge-arc)] transition-all duration-200" style={{ width: `${optimizer.progress}%` }} />
+                      </div>
+                      <p className="text-[10px] text-gray-400 mt-2 text-right font-mono">{optimizer.evaluated.toLocaleString('es-ES')} {t('dashboard.pathsEvaluated')}</p>
+                    </div>
+                  )}
+
+                  {optimizer.result && phase === 'results' && strategy && (
+                    <OptimizerResults result={optimizer.result} tier1Stats={strategy.statPriorities.slice(0, 2)} tier2Stats={strategy.statPriorities.slice(2)} />
+                  )}
+
+                  {phase === 'idle' && !strategy && (
+                    <div className="glass-card p-16 text-center border-dashed border-white/10">
+                      <div className="w-20 h-20 mx-auto bg-white/5 rounded-full flex items-center justify-center text-4xl border border-white/10 mb-6">🔮</div>
+                      <h3 className="font-[family-name:var(--font-orbitron)] text-lg font-bold uppercase tracking-widest text-white mb-3">A la espera de Directivas</h3>
+                      <p className="text-sm text-gray-400 max-w-sm mx-auto leading-relaxed">
+                        Ingresa un prompt en el panel izquierdo para que el Asesor IA comience a forjar tu build perfecta.
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
-            {/* Error del optimizador */}
-            {optimizer.error && (
-              <div className="glass-card p-4 border-red-500/30 animate-fade-in">
-                <p className="text-sm text-red-400">❌ {optimizer.error}</p>
-              </div>
-            )}
           </div>
-        </div>
-        )}
+        </main>
       </div>
-    </main>
+    </div>
   );
 }
 
-// ── Componente auxiliar: Punto de estado ─────────────────────
-
-function StatusDot({
-  label,
-  status,
-  detail,
-}: {
-  label: string;
-  status: 'online' | 'offline' | 'loading';
-  detail?: string;
-}) {
-  const colors = {
-    online: 'bg-emerald-400',
-    offline: 'bg-[var(--forge-text-muted)]',
-    loading: 'bg-amber-400 animate-pulse',
-  };
-
+function SidebarLink({ active, onClick, icon, label }: { active: boolean, onClick: () => void, icon: string, label: string }) {
   return (
-    <div className="flex items-center gap-1.5">
-      <div className={`w-1.5 h-1.5 rounded-full ${colors[status]}`} />
-      <span className="text-[10px] text-[var(--forge-text-muted)] uppercase tracking-wider">
-        {label}
-      </span>
-      {detail && (
-        <span className="text-[10px] text-[var(--forge-text-muted)]">
-          ({detail})
-        </span>
-      )}
+    <button
+      onClick={onClick}
+      className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm tracking-widest uppercase transition-all w-full text-left ${
+        active 
+        ? 'bg-gradient-to-r from-[var(--forge-accent-dim)] to-transparent border-l-4 border-[var(--forge-accent)] text-white shadow-[inset_0_0_20px_rgba(206,174,51,0.1)]' 
+        : 'text-gray-500 hover:text-white hover:bg-white/5 border-l-4 border-transparent'
+      }`}
+    >
+      <span className="text-lg grayscale">{icon}</span>
+      {label}
+    </button>
+  );
+}
+
+function StatusBadge({ label, status }: { label: string, status: 'online' | 'offline' | 'loading' }) {
+  const bg = status === 'online' ? 'bg-emerald-500' : status === 'offline' ? 'bg-red-500' : 'bg-[#ceae33]';
+  const pulse = status === 'loading' ? 'animate-pulse' : '';
+  
+  return (
+    <div className="flex items-center gap-2 bg-black/40 border border-white/10 px-2.5 py-1 rounded-full">
+       <span className={`w-2 h-2 rounded-full ${bg} ${pulse} shadow-[0_0_5px_currentColor]`}></span>
+       <span className="text-[10px] font-bold text-white tracking-widest uppercase">{label}</span>
     </div>
   );
 }

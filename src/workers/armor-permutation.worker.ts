@@ -201,17 +201,27 @@ function prepareArmorPools(
   for (const slot of Object.keys(pools) as ArmorSlot[]) {
     const items = armorBySlot[slot] || [];
 
+    // PODA PRE-CÁLCULO: Eliminar legendarias con menos de 58 stats base totales
+    // Excepción: items de clase, porque no tienen stats base altos normalmente
+    const prunedItems = items.filter(item => {
+      if (slot === 'classItem') return true;
+      if (item.isExotic) return true; // Nunca podamos exóticos
+      
+      const totalBaseStats = Object.values(item.baseStats).reduce((a, b) => a + b, 0);
+      return totalBaseStats >= 58;
+    });
+
     if (exoticSlot && slot === exoticSlot) {
       // Este slot: solo el exótico requerido
-      pools[slot] = items.filter(
+      pools[slot] = prunedItems.filter(
         (item) => item.itemHash === requiredExoticHash
       );
     } else if (exoticSlot && slot !== exoticSlot) {
       // Otros slots: solo legendarias (ya hay un exótico fijado)
-      pools[slot] = items.filter((item) => !item.isExotic);
+      pools[slot] = prunedItems.filter((item) => !item.isExotic);
     } else {
       // Sin exótico requerido: incluir todo (la validación se hace en el loop)
-      pools[slot] = items;
+      pools[slot] = prunedItems;
     }
   }
 

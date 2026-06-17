@@ -1,0 +1,25 @@
+{
+  "name": "Destiny AI Forge",
+  "short_name": "AI Forge",
+  "description": "AI-powered build crafter & inventory manager for Destiny 2",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#080a0f",
+  "theme_color": "#e8b94a",
+  "orientation": "any",
+  "categories": ["games", "utilities"],
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

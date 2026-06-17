@@ -97,19 +97,31 @@ export function optimizeArtificeStats(
   return extraStats;
 }
 
+const MOD_COSTS: Record<StatName, { major: number, minor: number }> = {
+  intellect: { major: 5, minor: 2 },
+  recovery: { major: 4, minor: 2 },
+  resilience: { major: 3, minor: 1 },
+  discipline: { major: 3, minor: 1 },
+  mobility: { major: 3, minor: 1 },
+  strength: { major: 3, minor: 1 },
+};
+
 /**
  * Asigna automáticamente mods de armadura (+10 o +5) para maximizar los Tiers.
- * Máximo 5 mods (uno por pieza).
+ * Respeta un presupuesto de energía total estimado (ej. 15 de energía disponible global para stat mods)
+ * y un máximo de 5 mods en total.
  */
 export function assignStatMods(
   currentStats: ArmorStats,
   tier1Stats: StatName[],
   tier2Stats: StatName[],
-  maxMods = 5
-): { stat: StatName; value: number }[] {
-  const mods: { stat: StatName; value: number }[] = [];
+  maxMods = 5,
+  maxEnergyBudget = 15 // Un presupuesto global razonable para repartir entre 5 piezas
+): { stat: StatName; value: number; cost: number }[] {
+  const mods: { stat: StatName; value: number; cost: number }[] = [];
   const stats = { ...currentStats };
   let remainingMods = maxMods;
+  let remainingEnergy = maxEnergyBudget;
 
   const statPriorities = [
     ...tier1Stats,
@@ -118,22 +130,38 @@ export function assignStatMods(
   ];
 
   for (const stat of statPriorities) {
-    while (remainingMods > 0 && stats[stat] < 100) {
+    while (remainingMods > 0 && remainingEnergy > 0 && stats[stat] < 100) {
        const needed = 100 - stats[stat];
        const excess = stats[stat] % 10;
        const neededForNextTier = 10 - excess;
 
-       // Evitamos poner mods en stats negativos por fragmentos hasta que se recuperen,
-       // o simplemente ponemos el +10 genérico.
+       const costs = MOD_COSTS[stat];
+
        if (neededForNextTier > 0 && neededForNextTier <= 5 && stats[stat] >= 0) {
-         mods.push({ stat, value: 5 });
-         stats[stat] += 5;
-         remainingMods--;
+         if (remainingEnergy >= costs.minor) {
+            mods.push({ stat, value: 5, cost: costs.minor });
+            stats[stat] += 5;
+            remainingMods--;
+            remainingEnergy -= costs.minor;
+         } else {
+            break; // No hay energía ni para un minor
+         }
        } 
        else if (needed >= 10 || neededForNextTier > 5 || stats[stat] < 0) {
-         mods.push({ stat, value: 10 });
-         stats[stat] += 10;
-         remainingMods--;
+         if (remainingEnergy >= costs.major) {
+            mods.push({ stat, value: 10, cost: costs.major });
+            stats[stat] += 10;
+            remainingMods--;
+            remainingEnergy -= costs.major;
+         } else if (remainingEnergy >= costs.minor) {
+            // Fallback a minor si no alcanza para major
+            mods.push({ stat, value: 5, cost: costs.minor });
+            stats[stat] += 5;
+            remainingMods--;
+            remainingEnergy -= costs.minor;
+         } else {
+            break;
+         }
        } else {
          break;
        }

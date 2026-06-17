@@ -10,16 +10,20 @@
 import { useState } from 'react';
 import { GUARDIAN_CLASSES, type GuardianClass } from '@/lib/constants';
 import { useBuildStore } from '@/stores/build-store';
+import { useLocale } from '@/hooks/use-locale';
 
 type ActivityOption = 'raid' | 'dungeon' | 'grandmaster' | 'pvp' | 'general' | '';
 
-const ACTIVITY_OPTIONS: { value: ActivityOption; label: string }[] = [
-  { value: '', label: 'General' },
-  { value: 'raid', label: '⚔️ Incursión' },
-  { value: 'dungeon', label: '🏰 Mazmorra' },
-  { value: 'grandmaster', label: '💀 Gran Maestro' },
-  { value: 'pvp', label: '🎯 PvP / Crisol' },
-];
+export function BuildPrompt() {
+  const { t } = useLocale();
+
+  const ACTIVITY_OPTIONS: { value: ActivityOption; label: string }[] = [
+    { value: '', label: t('prompt.activity.general') },
+    { value: 'raid', label: '⚔️ ' + t('prompt.activity.raid') },
+    { value: 'dungeon', label: '🏰 ' + t('prompt.activity.dungeon') },
+    { value: 'grandmaster', label: '💀 ' + t('prompt.activity.gm') },
+    { value: 'pvp', label: '🎯 ' + t('prompt.activity.pvp') },
+  ];
 
 const CLASS_DISPLAY: Record<GuardianClass, { label: string; icon: string; color: string }> = {
   titan: { label: 'Titán', icon: '🛡️', color: 'var(--forge-solar)' },
@@ -35,7 +39,6 @@ const EXAMPLE_PROMPTS = [
   'Build PvP competitivo con buen juego neutral',
 ];
 
-export function BuildPrompt() {
   const [prompt, setPrompt] = useState('');
   const [guardianClass, setGuardianClass] = useState<GuardianClass>('hunter');
   const [activityContext, setActivityContext] = useState<'raid' | 'dungeon' | 'grandmaster' | 'pvp' | 'general' | ''>('');
@@ -67,10 +70,10 @@ export function BuildPrompt() {
         </div>
         <div>
           <h2 className="font-[family-name:var(--font-orbitron)] text-sm font-semibold uppercase tracking-wider text-[var(--forge-text-primary)]">
-            Consejero IA
+            {t('prompt.title')}
           </h2>
           <p className="text-xs text-[var(--forge-text-muted)]">
-            Describe el build que necesitas en lenguaje natural
+            {t('prompt.subtitle')}
           </p>
         </div>
       </div>
@@ -79,7 +82,7 @@ export function BuildPrompt() {
         {/* Selector de Clase */}
         <div>
           <label className="text-xs text-[var(--forge-text-muted)] uppercase tracking-wider mb-2 block">
-            Clase del Guardián
+            {t('prompt.class')}
           </label>
           <div className="grid grid-cols-3 gap-2">
             {GUARDIAN_CLASSES.map((cls) => {
@@ -101,8 +104,8 @@ export function BuildPrompt() {
                     }
                   `}
                 >
-                  <span>{display.icon}</span>
-                  <span>{display.label}</span>
+                  <span className="text-lg">{display.icon}</span>
+                  {t(`class.${cls}`)}
                 </button>
               );
             })}
@@ -112,7 +115,7 @@ export function BuildPrompt() {
         {/* Selector de Actividad */}
         <div>
           <label className="text-xs text-[var(--forge-text-muted)] uppercase tracking-wider mb-2 block">
-            Tipo de Actividad
+            {t('prompt.activityLabel')}
           </label>
           <div className="flex flex-wrap gap-2">
             {ACTIVITY_OPTIONS.map((option) => {
@@ -142,13 +145,13 @@ export function BuildPrompt() {
         {/* Campo de Prompt */}
         <div>
           <label className="text-xs text-[var(--forge-text-muted)] uppercase tracking-wider mb-2 block">
-            ¿Qué build necesitas?
+            {t('prompt.fieldLabel')}
           </label>
           <textarea
             id="build-prompt-input"
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
-            placeholder="Ej: Build de cazador solar para incursiones con mucho daño de super..."
+            placeholder={t('prompt.placeholder')}
             maxLength={1000}
             rows={3}
             className="
@@ -170,8 +173,8 @@ export function BuildPrompt() {
 
         {/* Ejemplos */}
         <div>
-          <label className="text-xs text-[var(--forge-text-muted)] uppercase tracking-wider mb-2 block">
-            Ejemplos rápidos
+          <label className="text-xs font-semibold text-[var(--forge-text-muted)] uppercase tracking-wider mb-2 block">
+            {t('prompt.examples.title')}
           </label>
           <div className="flex flex-wrap gap-1.5">
             {EXAMPLE_PROMPTS.map((example) => (
