@@ -73,26 +73,26 @@ export function BuildStrategyCard({
   const subclass = SUBCLASS_DISPLAY[normalizedSubclass] || SUBCLASS_DISPLAY['prismatic'];
 
   return (
-    <div className="glass-card overflow-hidden animate-fade-in-up relative group">
+    <div className="bg-[var(--forge-bg-card)] border border-[var(--forge-border)] shadow-sm backdrop-blur-xl rounded-3xl overflow-hidden animate-fade-in-up relative group">
       {/* Glow effects de fondo */}
       <div 
-        className="absolute -top-32 -right-32 w-64 h-64 rounded-full blur-[100px] opacity-20 pointer-events-none transition-opacity duration-500 group-hover:opacity-30"
+        className="absolute -top-32 -right-32 w-64 h-64 rounded-full blur-[100px] opacity-10 pointer-events-none transition-opacity duration-500 group-hover:opacity-20"
         style={{ backgroundColor: subclass.color }} 
       />
 
       {/* Cabecera Premium */}
       <div
-        className={`px-6 py-5 bg-gradient-to-r ${subclass.gradient} bg-opacity-10 border-b border-[var(--forge-border)] relative overflow-hidden`}
-        style={{ background: `linear-gradient(135deg, ${subclass.color}25, ${subclass.color}05)` }}
+        className={`px-6 py-5 bg-gradient-to-r ${subclass.gradient} bg-opacity-[0.05] border-b border-[var(--forge-border)] relative overflow-hidden`}
+        style={{ background: `linear-gradient(135deg, ${subclass.color}15, ${subclass.color}05)` }}
       >
-        <div className="absolute inset-0 bg-[url('/noise.png')] opacity-10 mix-blend-overlay"></div>
+        <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.02] mix-blend-multiply"></div>
         <div className="flex items-center justify-between relative z-10">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl flex items-center justify-center text-3xl shadow-lg bg-[var(--forge-bg-primary)] border border-[rgba(255,255,255,0.1)]">
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center text-3xl shadow-sm bg-[var(--forge-bg-card)] border border-[var(--forge-border-subtle)]">
                {subclass.icon}
             </div>
             <div>
-              <h3 className="font-[family-name:var(--font-orbitron)] text-lg font-bold uppercase tracking-widest drop-shadow-md text-white">
+              <h3 className="font-[family-name:var(--font-orbitron)] text-lg font-bold uppercase tracking-widest text-[var(--forge-text-primary)]">
                 {subclass.label}
               </h3>
               <p className="text-xs font-semibold tracking-wider uppercase mt-1" style={{ color: subclass.color }}>
@@ -100,9 +100,9 @@ export function BuildStrategyCard({
               </p>
             </div>
           </div>
-          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/40 border border-white/10 backdrop-blur-md">
+          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/60 border border-[var(--forge-border)] backdrop-blur-md shadow-sm">
              <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: subclass.color }} />
-             <span className="text-[10px] font-bold text-white uppercase tracking-wider">AI Synced</span>
+             <span className="text-[10px] font-bold text-[var(--forge-text-secondary)] uppercase tracking-wider">AI Synced</span>
           </div>
         </div>
       </div>
@@ -112,17 +112,17 @@ export function BuildStrategyCard({
         {/* Core Elements Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
            {/* Exótico Recomendado */}
-           <div className="bg-gradient-to-br from-[var(--forge-bg-secondary)] to-[var(--forge-bg-tertiary)] p-4 rounded-xl border border-[var(--forge-border)] shadow-sm hover:border-[var(--forge-border-hover)] transition-colors">
+           <div className="bg-gradient-to-br from-[var(--forge-bg-secondary)] to-[var(--forge-bg-card)] p-4 rounded-xl border border-[var(--forge-border)] shadow-sm hover:border-[var(--forge-border-hover)] transition-colors">
               <label className="text-[10px] text-[var(--forge-text-muted)] uppercase tracking-widest mb-3 block flex items-center gap-2">
-                <span className="w-1 h-3 rounded-full bg-[#ceae33]"></span>
+                <span className="w-1 h-3 rounded-full bg-[var(--forge-accent)]"></span>
                 Exótico Core
               </label>
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-lg bg-[#ceae33]/10 border border-[#ceae33]/30 flex items-center justify-center text-2xl shadow-inner">
+                <div className="w-12 h-12 rounded-lg bg-[var(--forge-accent-dim)] border border-[var(--forge-border-accent)] flex items-center justify-center text-2xl shadow-sm">
                   👑
                 </div>
                 <div>
-                  <p className="text-base font-bold text-[#ceae33]">
+                  <p className="text-base font-bold text-[var(--forge-accent)]">
                     {strategy.requiredExoticName}
                   </p>
                   <p className="text-[10px] text-[var(--forge-text-muted)] font-mono mt-0.5">
@@ -133,7 +133,7 @@ export function BuildStrategyCard({
            </div>
 
            {/* Stat Priorities */}
-           <div className="bg-gradient-to-br from-[var(--forge-bg-secondary)] to-[var(--forge-bg-tertiary)] p-4 rounded-xl border border-[var(--forge-border)] shadow-sm hover:border-[var(--forge-border-hover)] transition-colors">
+           <div className="bg-gradient-to-br from-[var(--forge-bg-secondary)] to-[var(--forge-bg-card)] p-4 rounded-xl border border-[var(--forge-border)] shadow-sm hover:border-[var(--forge-border-hover)] transition-colors">
               <label className="text-[10px] text-[var(--forge-text-muted)] uppercase tracking-widest mb-3 block flex items-center gap-2">
                 <span className="w-1 h-3 rounded-full bg-[var(--forge-accent)]"></span>
                 Focus Stats
@@ -169,29 +169,29 @@ export function BuildStrategyCard({
                Strategic Assessment
              </label>
           </div>
-          <p className="text-sm text-[var(--forge-text-primary)] leading-relaxed bg-[var(--forge-bg-tertiary)] rounded-xl p-6 pt-7 border border-[var(--forge-border-accent)]/30 shadow-inner">
-            <span className="text-2xl text-[var(--forge-accent)] opacity-50 absolute top-4 left-2 leading-none">"</span>
+          <p className="text-sm text-[var(--forge-text-primary)] leading-relaxed bg-[var(--forge-bg-secondary)] rounded-xl p-6 pt-7 border border-[var(--forge-border-accent)]/30 shadow-sm">
+            <span className="text-2xl text-[var(--forge-accent)] opacity-30 absolute top-4 left-2 leading-none">"</span>
             <span className="relative z-10 pl-2">{strategy.reasoning}</span>
-            <span className="text-2xl text-[var(--forge-accent)] opacity-50 absolute bottom-0 right-4 leading-none">"</span>
+            <span className="text-2xl text-[var(--forge-accent)] opacity-30 absolute bottom-0 right-4 leading-none">"</span>
           </p>
         </div>
 
         {/* Penalizaciones de Fragmentos */}
         {strategy.negativeStatFragments && strategy.negativeStatFragments.length > 0 && (
-          <div className="bg-red-500/5 border border-red-500/20 rounded-xl p-4 mt-4">
-            <label className="text-[10px] text-red-400 uppercase tracking-widest mb-3 block flex items-center gap-2 font-bold">
+          <div className="bg-red-50 border border-red-200 rounded-xl p-4 mt-4 shadow-sm">
+            <label className="text-[10px] text-red-600 uppercase tracking-widest mb-3 block flex items-center gap-2 font-bold">
               ⚠️ Alerta de Penalizaciones
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {strategy.negativeStatFragments.map((frag, i) => (
                 <div
                   key={i}
-                  className="flex items-center justify-between px-3 py-2 rounded-lg bg-black/40 border border-red-500/10"
+                  className="flex items-center justify-between px-3 py-2 rounded-lg bg-white border border-red-100 shadow-sm"
                 >
                   <span className="text-xs text-[var(--forge-text-secondary)] font-medium">
                     {frag.fragmentName}
                   </span>
-                  <span className="text-xs font-mono font-bold text-red-400 bg-red-500/10 px-2 py-0.5 rounded">
+                  <span className="text-xs font-mono font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded">
                     {frag.penalty} {STAT_LABELS[frag.statName] || frag.statName}
                   </span>
                 </div>

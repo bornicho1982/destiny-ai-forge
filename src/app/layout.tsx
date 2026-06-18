@@ -31,7 +31,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#e8b94a",
+  themeColor: "#06b6d4",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -44,22 +44,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} ${orbitron.variable}`} suppressHydrationWarning>
-      <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              try {
-                let theme = localStorage.getItem('forge-theme');
-                if (!theme) {
-                  theme = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
-                }
-                document.documentElement.setAttribute('data-theme', theme);
-              } catch (e) {}
-            `,
-          }}
-        />
-      </head>
+    <html lang="en" data-theme="light" className={`${inter.variable} ${orbitron.variable}`} suppressHydrationWarning>
       <body className="font-[family-name:var(--font-inter)] antialiased min-h-screen">
         {/* Background layers */}
         <div className="fixed inset-0 -z-10 bg-[var(--forge-bg-primary)]" />

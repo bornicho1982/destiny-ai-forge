@@ -62,7 +62,7 @@ const EXAMPLE_PROMPTS = [
   };
 
   return (
-    <div className="glass-card p-6 animate-fade-in-up">
+    <div className="bg-[var(--forge-bg-card)] border border-[var(--forge-border)] shadow-sm backdrop-blur-xl rounded-3xl p-8 animate-fade-in-up">
       {/* Título */}
       <div className="flex items-center gap-3 mb-6">
         <div className="w-10 h-10 rounded-xl bg-[var(--forge-accent-dim)] border border-[var(--forge-border-accent)] flex items-center justify-center text-lg">
@@ -100,7 +100,7 @@ const EXAMPLE_PROMPTS = [
                     ${
                       isSelected
                         ? 'border-[var(--forge-border-accent)] bg-[var(--forge-accent-dim)] text-[var(--forge-text-primary)]'
-                        : 'border-[var(--forge-border)] bg-[var(--forge-bg-secondary)] text-[var(--forge-text-secondary)] hover:border-[rgba(255,255,255,0.1)]'
+                        : 'border-[var(--forge-border)] bg-[var(--forge-bg-secondary)] text-[var(--forge-text-secondary)] hover:border-[var(--forge-border-accent)]'
                     }
                   `}
                 >
@@ -187,7 +187,7 @@ const EXAMPLE_PROMPTS = [
                   border border-[var(--forge-border)]
                   text-[var(--forge-text-muted)]
                   hover:text-[var(--forge-text-secondary)]
-                  hover:border-[rgba(255,255,255,0.1)]
+                  hover:border-[var(--forge-border-accent)]
                   transition-all duration-200 cursor-pointer
                 "
               >

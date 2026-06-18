@@ -7,131 +7,79 @@
    Glassmorphism, micro-animations, responsive utilities.
    ============================================================ */
 
-/* ── Dark Theme (Default) ────────────────────────────────── */
 :root,
-[data-theme="dark"] {
-  --forge-bg-primary: #080a0f;
-  --forge-bg-secondary: #0f1118;
-  --forge-bg-tertiary: #161926;
-  --forge-bg-card: rgba(15, 17, 24, 0.88);
-  --forge-bg-glass: rgba(22, 25, 38, 0.65);
-  --forge-bg-hover: rgba(255, 255, 255, 0.04);
-  --forge-bg-active: rgba(255, 255, 255, 0.08);
-  --forge-bg-input: rgba(8, 10, 15, 0.9);
+[data-theme="light"],
+[data-theme="dark"] { /* Forzamos light theme para todo según petición del usuario "nada de temas oscuros" */
+  /* Backgrounds: Very clean white/frost with subtle blueish tint */
+  --forge-bg-primary: #f8fafc;
+  --forge-bg-secondary: #f1f5f9;
+  --forge-bg-tertiary: #e2e8f0;
+  --forge-bg-card: rgba(255, 255, 255, 0.7);
+  --forge-bg-glass: rgba(255, 255, 255, 0.4);
+  --forge-bg-hover: rgba(14, 165, 233, 0.08); /* Cyan hover */
+  --forge-bg-active: rgba(14, 165, 233, 0.15);
+  --forge-bg-input: rgba(255, 255, 255, 0.9);
 
   /* Subclass elements */
-  --forge-solar: #f5a623;
-  --forge-arc: #79bbe8;
-  --forge-void: #b07be5;
-  --forge-stasis: #4d88ff;
-  --forge-strand: #3ddc84;
-  --forge-prismatic: linear-gradient(135deg, #f5a623, #b07be5, #79bbe8, #3ddc84);
+  --forge-solar: #f59e0b;
+  --forge-arc: #0ea5e9;
+  --forge-void: #8b5cf6;
+  --forge-stasis: #3b82f6;
+  --forge-strand: #10b981;
+  --forge-prismatic: linear-gradient(135deg, #f59e0b, #8b5cf6, #0ea5e9, #10b981);
 
-  /* Primary accent (golden engram glow) */
-  --forge-accent: #e8b94a;
-  --forge-accent-dim: rgba(232, 185, 74, 0.12);
-  --forge-accent-hover: #f0c85e;
-  --forge-accent-muted: rgba(232, 185, 74, 0.4);
+  /* Primary accent: Electric Cyan */
+  --forge-accent: #06b6d4;
+  --forge-accent-dim: rgba(6, 182, 212, 0.12);
+  --forge-accent-hover: #0891b2;
+  --forge-accent-muted: rgba(6, 182, 212, 0.4);
 
-  /* Stat colors */
-  --forge-stat-mobility: #8bb8e8;
-  --forge-stat-resilience: #e8834a;
-  --forge-stat-recovery: #e8e6e3;
-  --forge-stat-discipline: #5a8be8;
-  --forge-stat-intellect: #d4b44a;
-  --forge-stat-strength: #4ae888;
+  /* Stat colors (Vibrant on light backgrounds) */
+  --forge-stat-mobility: #3b82f6;
+  --forge-stat-resilience: #ea580c;
+  --forge-stat-recovery: #475569;
+  --forge-stat-discipline: #0284c7;
+  --forge-stat-intellect: #ca8a04;
+  --forge-stat-strength: #16a34a;
 
-  /* Text */
-  --forge-text-primary: #eae8e4;
-  --forge-text-secondary: #a0a0a8;
-  --forge-text-muted: #55556a;
-  --forge-text-inverse: #080a0f;
+  /* Text: Dark Slate for high contrast */
+  --forge-text-primary: #0f172a;
+  --forge-text-secondary: #334155;
+  --forge-text-muted: #64748b;
+  --forge-text-inverse: #ffffff;
 
-  /* Borders */
-  --forge-border: rgba(255, 255, 255, 0.07);
-  --forge-border-subtle: rgba(255, 255, 255, 0.04);
-  --forge-border-accent: rgba(232, 185, 74, 0.3);
-  --forge-border-hover: rgba(255, 255, 255, 0.15);
+  /* Borders: Very subtle frost borders */
+  --forge-border: rgba(148, 163, 184, 0.2);
+  --forge-border-subtle: rgba(148, 163, 184, 0.1);
+  --forge-border-accent: rgba(6, 182, 212, 0.4);
+  --forge-border-hover: rgba(6, 182, 212, 0.6);
 
-  /* Shadows */
-  --forge-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
-  --forge-shadow-md: 0 4px 24px rgba(0, 0, 0, 0.5);
-  --forge-shadow-lg: 0 8px 48px rgba(0, 0, 0, 0.6);
-  --forge-shadow-glow: 0 0 40px rgba(232, 185, 74, 0.12);
-  --forge-shadow-glow-strong: 0 0 60px rgba(232, 185, 74, 0.25);
+  /* Shadows: Soft Neumorphic / Glassmorphism */
+  --forge-shadow-sm: 0 4px 12px rgba(148, 163, 184, 0.15);
+  --forge-shadow-md: 0 10px 30px rgba(148, 163, 184, 0.2);
+  --forge-shadow-lg: 0 20px 40px rgba(148, 163, 184, 0.25);
+  --forge-shadow-glow: 0 0 30px rgba(6, 182, 212, 0.2);
+  --forge-shadow-glow-strong: 0 0 50px rgba(6, 182, 212, 0.4);
 
   /* Misc */
-  --forge-scrollbar-thumb: #1e2235;
+  --forge-scrollbar-thumb: #cbd5e1;
   --forge-scrollbar-track: transparent;
-  --forge-overlay: rgba(0, 0, 0, 0.7);
-  --forge-danger: #e85454;
-  --forge-success: #4ae876;
-  --forge-warning: #e8b94a;
+  --forge-overlay: rgba(255, 255, 255, 0.6); /* White frost overlay */
+  --forge-danger: #ef4444;
+  --forge-success: #10b981;
+  --forge-warning: #f59e0b;
 
-  /* Item tiers */
-  --forge-tier-exotic: #ceae33;
-  --forge-tier-legendary: #522f65;
-  --forge-tier-rare: #5076a3;
-  --forge-tier-common: #c3bcb4;
+  /* Item tiers (Destiny rarity colors, optimized for light backgrounds) */
+  --forge-tier-exotic: #eab308;
+  --forge-tier-legendary: #7c3aed;
+  --forge-tier-rare: #2563eb;
+  --forge-tier-common: #64748b;
 
   /* Timing */
   --forge-transition-fast: 120ms cubic-bezier(0.4, 0, 0.2, 1);
   --forge-transition-base: 220ms cubic-bezier(0.4, 0, 0.2, 1);
   --forge-transition-slow: 380ms cubic-bezier(0.4, 0, 0.2, 1);
   --forge-transition-spring: 500ms cubic-bezier(0.34, 1.56, 0.64, 1);
-
-  color-scheme: dark;
-}
-
-/* ── Light Theme ─────────────────────────────────────────── */
-[data-theme="light"] {
-  --forge-bg-primary: #f4f2ed;
-  --forge-bg-secondary: #eae7e0;
-  --forge-bg-tertiary: #dfdbd3;
-  --forge-bg-card: rgba(255, 255, 255, 0.82);
-  --forge-bg-glass: rgba(255, 255, 255, 0.65);
-  --forge-bg-hover: rgba(0, 0, 0, 0.04);
-  --forge-bg-active: rgba(0, 0, 0, 0.08);
-  --forge-bg-input: rgba(255, 255, 255, 0.9);
-
-  /* Accent shifts to a warm indigo for light mode */
-  --forge-accent: #4a5ee8;
-  --forge-accent-dim: rgba(74, 94, 232, 0.10);
-  --forge-accent-hover: #5e70f0;
-  --forge-accent-muted: rgba(74, 94, 232, 0.35);
-
-  /* Text */
-  --forge-text-primary: #1a1a2e;
-  --forge-text-secondary: #4a4a5c;
-  --forge-text-muted: #8a8a9c;
-  --forge-text-inverse: #f4f2ed;
-
-  /* Borders */
-  --forge-border: rgba(0, 0, 0, 0.08);
-  --forge-border-subtle: rgba(0, 0, 0, 0.04);
-  --forge-border-accent: rgba(74, 94, 232, 0.25);
-  --forge-border-hover: rgba(0, 0, 0, 0.15);
-
-  /* Shadows */
-  --forge-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
-  --forge-shadow-md: 0 4px 20px rgba(0, 0, 0, 0.08);
-  --forge-shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.12);
-  --forge-shadow-glow: 0 0 30px rgba(74, 94, 232, 0.10);
-  --forge-shadow-glow-strong: 0 0 50px rgba(74, 94, 232, 0.20);
-
-  /* Misc */
-  --forge-scrollbar-thumb: #c5c0b8;
-  --forge-scrollbar-track: transparent;
-  --forge-overlay: rgba(0, 0, 0, 0.4);
-  --forge-danger: #d64040;
-  --forge-success: #2ea858;
-  --forge-warning: #d4960a;
-
-  /* Item tiers remain consistent for recognition */
-  --forge-tier-exotic: #ceae33;
-  --forge-tier-legendary: #7e57a0;
-  --forge-tier-rare: #5076a3;
-  --forge-tier-common: #8a8a8a;
 
   color-scheme: light;
 }
